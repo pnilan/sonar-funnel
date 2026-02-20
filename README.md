@@ -1,6 +1,10 @@
 # sonar-funnel
 
-Automated triage of customer support issues from Pylon. Fetches recent issues and their messages, then uses an AI agent (Claude) to classify each as connector-related or not, extracting structured analysis.
+Automated triage of customer support issues. Fetches recent issues and their messages, uses an AI agent (Claude) to classify each one, and posts a summary report to Slack.
+
+Built with [Airbyte Agent Connectors](https://github.com/airbytehq/airbyte-agent-connectors) for API integrations:
+- [`airbyte-agent-pylon`](https://pypi.org/project/airbyte-agent-pylon/) — fetches support issues and messages from Pylon
+- [`airbyte-agent-slack`](https://pypi.org/project/airbyte-agent-slack/) — posts reports to Slack
 
 ## Setup
 
@@ -44,19 +48,19 @@ uv run sonar-funnel --days 1 --debug --dry-run
 
 ### Output
 
-Results are always printed to stdout. With `--execute`, a summary is also posted to the configured Slack channel (including links to the original Pylon issues). With `--dry-run`, only stdout output is produced. Status and progress messages go to stderr, so you can pipe results cleanly.
+Results are always printed to stdout. With `--execute`, a summary is also posted to the configured Slack channel (including links to the original issues). With `--dry-run`, only stdout output is produced. Status and progress messages go to stderr, so you can pipe results cleanly.
 
 ```
-## #123 — Sync failing for source-postgres
-  Link: https://app.usepylon.com/issues/123
+## #123 — Sync failing after upgrade
+  Link: https://support.example.com/issues/123
   Classification: CONNECTOR [source-postgres]
   Severity: high
   Area: connectors
-  Summary: Customer reports incremental sync fails with CDC enabled
-  Reasoning: The issue describes a failure in the source-postgres connector's CDC replication
+  Summary: Customer reports incremental sync fails after upgrading
+  Reasoning: The issue describes a failure in a specific connector's sync process
 
 ## #456 — How do I invite team members?
-  Link: https://app.usepylon.com/issues/456
+  Link: https://support.example.com/issues/456
   Classification: other
   Severity: low
   Area: platform
@@ -64,13 +68,13 @@ Results are always printed to stdout. With `--execute`, a summary is also posted
   Reasoning: This is a general platform question, not related to any connector
 ```
 
-Each issue is classified with:
+Each issue includes:
 
-- **Link** — URL to the original Pylon issue (when available)
-- **Classification** — `CONNECTOR` (Airbyte-maintained connector issue) or `other`
+- **Link** — URL to the original issue (when available)
+- **Classification** — issue category
 - **Severity** — `critical`, `high`, `medium`, or `low`
-- **Area** — Part of the product affected (connectors, platform, cloud, docs, etc.)
-- **Affected connector** — Specific connector name, if identifiable
+- **Area** — Part of the product affected
+- **Affected connector/service** — Specific name, if identifiable
 - **Summary** — Brief description of the problem
 - **Reasoning** — Explanation of the classification decision
 
