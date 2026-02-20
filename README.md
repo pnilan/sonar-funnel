@@ -23,26 +23,32 @@ cp .env.example .env
 
 ## Usage
 
+Either `--execute` or `--dry-run` must be provided:
+
 ```bash
-# Analyze issues from the last 7 days (default)
-uv run sonar-funnel
+# Full run: analyze and post to Slack
+uv run sonar-funnel --execute
+
+# Dry run: analyze and print to stdout only (no Slack)
+uv run sonar-funnel --dry-run
 
 # Look back 1 day
-uv run sonar-funnel --days 1
+uv run sonar-funnel --days 1 --execute
 
 # Verbose logging (shows fetch/pagination progress)
-uv run sonar-funnel --days 3 -v
+uv run sonar-funnel --days 3 -v --execute
 
 # Debug logging (includes HTTP requests)
-uv run sonar-funnel --days 1 --debug
+uv run sonar-funnel --days 1 --debug --dry-run
 ```
 
 ### Output
 
-Results are printed to stdout and posted as a summary message to the configured Slack channel. Status and progress messages go to stderr, so you can pipe results cleanly.
+Results are always printed to stdout. With `--execute`, a summary is also posted to the configured Slack channel (including links to the original Pylon issues). With `--dry-run`, only stdout output is produced. Status and progress messages go to stderr, so you can pipe results cleanly.
 
 ```
 ## #123 — Sync failing for source-postgres
+  Link: https://app.usepylon.com/issues/123
   Classification: CONNECTOR [source-postgres]
   Severity: high
   Area: connectors
@@ -50,6 +56,7 @@ Results are printed to stdout and posted as a summary message to the configured 
   Reasoning: The issue describes a failure in the source-postgres connector's CDC replication
 
 ## #456 — How do I invite team members?
+  Link: https://app.usepylon.com/issues/456
   Classification: other
   Severity: low
   Area: platform
@@ -59,6 +66,7 @@ Results are printed to stdout and posted as a summary message to the configured 
 
 Each issue is classified with:
 
+- **Link** — URL to the original Pylon issue (when available)
 - **Classification** — `CONNECTOR` (Airbyte-maintained connector issue) or `other`
 - **Severity** — `critical`, `high`, `medium`, or `low`
 - **Area** — Part of the product affected (connectors, platform, cloud, docs, etc.)
