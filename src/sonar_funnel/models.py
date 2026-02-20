@@ -31,6 +31,7 @@ class PylonIssueBundle(BaseModel):
     issue_id: str
     issue_number: int | None = None
     title: str
+    link: str | None = None
     state: str | None = None
     created_at: str | None = None
     tags: list[str] = Field(default_factory=list)

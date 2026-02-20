@@ -13,15 +13,22 @@ from sonar_funnel.pylon_source import fetch_recent_issues, get_connector
 from sonar_funnel.slack_report import format_slack_report, get_slack_connector, post_report
 
 
-async def run(days: int) -> None:
+async def run(days: int, *, dry_run: bool = False) -> None:
     connector = get_connector()
-    slack_connector, slack_channel_id = get_slack_connector()
+
+    slack_connector = None
+    slack_channel_id = None
+    if not dry_run:
+        slack_connector, slack_channel_id = get_slack_connector()
 
     print(f"Fetching Pylon issues from the last {days} day(s)...", file=sys.stderr)
     bundles = await fetch_recent_issues(connector, days_back=days)
 
     if not bundles:
         print("No issues found.", file=sys.stderr)
+        if slack_connector and slack_channel_id:
+            await post_report(slack_connector, slack_channel_id, f"No new Pylon issues found in the last {days} day(s).")
+            print("Report posted to Slack.", file=sys.stderr)
         return
 
     print(f"Found {len(bundles)} issue(s). Analyzing...\n", file=sys.stderr)
@@ -42,6 +49,8 @@ async def run(days: int) -> None:
         flag = "CONNECTOR" if analysis.is_airbyte_connector_issue else "other"
 
         print(f"## #{bundle.issue_number or bundle.issue_id} — {bundle.title}")
+        if bundle.link:
+            print(f"  Link: {bundle.link}")
         print(f"  Classification: {flag}{connector_label}")
         print(f"  Severity: {analysis.severity}")
         print(f"  Area: {analysis.impacted_area}")
@@ -49,9 +58,10 @@ async def run(days: int) -> None:
         print(f"  Reasoning: {analysis.reasoning}")
         print()
 
-    report_text = format_slack_report(results)
-    await post_report(slack_connector, slack_channel_id, report_text)
-    print("Report posted to Slack.", file=sys.stderr)
+    if slack_connector and slack_channel_id:
+        report_text = format_slack_report(results)
+        await post_report(slack_connector, slack_channel_id, report_text)
+        print("Report posted to Slack.", file=sys.stderr)
 
 
 def main() -> None:
@@ -77,6 +87,17 @@ def main() -> None:
         action="store_true",
         help="Enable debug logging (includes HTTP requests)",
     )
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument(
+        "--execute",
+        action="store_true",
+        help="Run the full flow including posting to Slack",
+    )
+    mode.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip posting to Slack (stdout output only)",
+    )
     args = parser.parse_args()
 
     if args.debug:
@@ -96,4 +117,4 @@ def main() -> None:
         logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.getLogger("httpcore").setLevel(logging.WARNING)
 
-    asyncio.run(run(args.days))
+    asyncio.run(run(args.days, dry_run=args.dry_run))

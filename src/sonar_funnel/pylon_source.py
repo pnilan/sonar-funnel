@@ -117,6 +117,7 @@ async def fetch_recent_issues(
                 issue_id=issue_id,
                 issue_number=getattr(issue, "number", None),
                 title=getattr(issue, "title", "") or "",
+                link=getattr(issue, "link", None),
                 state=getattr(issue, "state", None),
                 created_at=getattr(issue, "created_at", None),
                 tags=tags,

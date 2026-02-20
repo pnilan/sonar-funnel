@@ -44,8 +44,9 @@ def format_slack_report(
         )
         flag = "CONNECTOR" if analysis.is_airbyte_connector_issue else "other"
         issue_ref = f"#{bundle.issue_number}" if bundle.issue_number else bundle.issue_id
+        heading = f"<{bundle.link}|{issue_ref} — {bundle.title}>" if bundle.link else f"*{issue_ref} — {bundle.title}*"
 
-        lines.append(f"*{issue_ref} — {bundle.title}*")
+        lines.append(heading)
         lines.append(f">  Classification: `{flag}`{connector_label}")
         lines.append(f">  Severity: `{analysis.severity}`")
         lines.append(f">  Area: {analysis.impacted_area}")
