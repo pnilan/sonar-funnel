@@ -2,7 +2,7 @@
 
 Automated triage of customer support issues. Fetches recent issues and their messages, uses an AI agent (Claude) to classify each one, and posts a summary report to Slack.
 
-Built with [Airbyte Agent Connectors](https://github.com/airbytehq/airbyte-agent-connectors) for API integrations:
+Built with [Airbyte Agent Connectors](https://github.com/airbytehq/airbyte-agent-connectors):
 - [`airbyte-agent-pylon`](https://pypi.org/project/airbyte-agent-pylon/) — fetches support issues and messages from Pylon
 - [`airbyte-agent-slack`](https://pypi.org/project/airbyte-agent-slack/) — posts reports to Slack
 
