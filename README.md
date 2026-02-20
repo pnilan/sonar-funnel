@@ -18,6 +18,8 @@ cp .env.example .env
 |---|---|
 | `PYLON_API_TOKEN` | Pylon API token (admin user) |
 | `ANTHROPIC_API_KEY` | Anthropic API key for Claude |
+| `SLACK_API_TOKEN` | Slack bot token (requires `chat:write` scope) |
+| `SLACK_CHANNEL_ID` | Slack channel ID to post the report to |
 
 ## Usage
 
@@ -37,7 +39,7 @@ uv run sonar-funnel --days 1 --debug
 
 ### Output
 
-Results are printed to stdout. Status and progress messages go to stderr, so you can pipe results cleanly.
+Results are printed to stdout and posted as a summary message to the configured Slack channel. Status and progress messages go to stderr, so you can pipe results cleanly.
 
 ```
 ## #123 — Sync failing for source-postgres
@@ -66,14 +68,16 @@ Each issue is classified with:
 
 ## Rate limiting
 
-API calls to Pylon include automatic retry with exponential backoff when rate-limited (HTTP 429). Retries start at 5 seconds, double each attempt (capped at 2 minutes), and respect the `Retry-After` header when provided. The process will keep retrying indefinitely until it succeeds or the total runtime exceeds 1 hour.
+API calls to Pylon and Slack include automatic retry with exponential backoff when rate-limited (HTTP 429). Retries start at 5 seconds, double each attempt (capped at 2 minutes), and respect the `Retry-After` header when provided. The process will keep retrying indefinitely until it succeeds or the total runtime exceeds 1 hour.
 
 ## Project structure
 
 ```
 src/sonar_funnel/
 ├── main.py           # CLI entry point and orchestration
-├── pylon_source.py   # Pylon connector, issue/message fetching, retry logic
+├── pylon_source.py   # Pylon connector and issue/message fetching
+├── slack_report.py   # Slack connector setup, report formatting, and posting
+├── retry.py          # Shared retry logic with exponential backoff
 ├── agent.py          # PydanticAI classification agent
 └── models.py         # Shared Pydantic models
 ```

@@ -5,7 +5,7 @@ requires-python = ">=3.13"
 [[package]]
 name = "airbyte-agent-pylon"
 version = "0.1.0"
-source = { editable = "../sonar/integrations/pylon/.generated" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
@@ -18,19 +18,30 @@ dependencies = [
     { name = "pyyaml" },
     { name = "segment-analytics-python" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/2f/fb/ef32721520edfbb4d8bb4610802cc7a2d26080cf13504e077922e9770a96/airbyte_agent_pylon-0.1.0.tar.gz", hash = "sha256:36b98d2b112a7e8fb65dd5fba6c6bf53c71398fd3eb05f06b892a58599a33e6b", size = 146497, upload-time = "2026-02-20T16:35:46.392Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/b3/426984a9cf9c04c014e62a1256fc0801212121ada9f0af387999fb925ffa/airbyte_agent_pylon-0.1.0-py3-none-any.whl", hash = "sha256:7f48759306e6c4bb93ab31781b0af9b7321648597963aeb422c4c1131a1ee0d3", size = 169811, upload-time = "2026-02-20T16:35:44.744Z" },
+]
 
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.24.0" },
-    { name = "jinja2", specifier = ">=3.0.0" },
-    { name = "jsonpath-ng", specifier = ">=1.6.1" },
-    { name = "jsonref", specifier = ">=1.1.0" },
-    { name = "opentelemetry-api", specifier = ">=1.37.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.37.0" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "segment-analytics-python", specifier = ">=2.2.0" },
+[[package]]
+name = "airbyte-agent-slack"
+version = "0.1.70"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "jsonpath-ng" },
+    { name = "jsonref" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-sdk" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+    { name = "segment-analytics-python" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3f/da/cda7f6df98e354520d3f36faf2e30c8b578a91085e27839f5ae7f0e9fbb3/airbyte_agent_slack-0.1.70.tar.gz", hash = "sha256:891f153d98dc9213cba6e0fb72eb0c8950fdbd3ffcf95c60c17ca3ea5b0f079f", size = 148244, upload-time = "2026-02-20T02:13:07.974Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/cf/7d0530f657cac1ebc5a8e9bd2aab8e3711a686bc3a9978a72e7f3e4f91f1/airbyte_agent_slack-0.1.70-py3-none-any.whl", hash = "sha256:4c9093da3199c1af39ccc024da6de41619161fa0e3293feb78f034a423396773", size = 171235, upload-time = "2026-02-20T02:13:06.096Z" },
 ]
 
 [[package]]
@@ -649,13 +660,15 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "airbyte-agent-pylon" },
+    { name = "airbyte-agent-slack" },
     { name = "pydantic-ai-slim", extra = ["anthropic"] },
     { name = "python-dotenv" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "airbyte-agent-pylon", editable = "../sonar/integrations/pylon/.generated" },
+    { name = "airbyte-agent-pylon", specifier = ">=0.1.0" },
+    { name = "airbyte-agent-slack", specifier = ">=0.1.0" },
     { name = "pydantic-ai-slim", extras = ["anthropic"], specifier = ">=1.62.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
 ]

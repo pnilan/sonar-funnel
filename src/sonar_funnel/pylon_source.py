@@ -1,58 +1,16 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import re
-import time
 from datetime import datetime, timedelta, timezone
 
 from airbyte_agent_pylon import PylonAuthConfig, PylonConnector
-from airbyte_agent_pylon._vendored.connector_sdk import RateLimitError
 
 from sonar_funnel.models import PylonIssueBundle
+from sonar_funnel.retry import reset_timer, with_retry
 
 logger = logging.getLogger(__name__)
-
-PROCESS_TIMEOUT = 3600  # 1 hour
-BASE_DELAY = 5.0  # seconds
-MAX_DELAY = 120.0  # cap backoff at 2 minutes
-
-_process_start: float | None = None
-
-
-def _elapsed() -> float:
-    """Seconds since the process started tracking time."""
-    if _process_start is None:
-        return 0.0
-    return time.monotonic() - _process_start
-
-
-async def _with_retry(coro_fn, *args, **kwargs):
-    """Call an async function with exponential backoff on rate-limit errors.
-
-    Retries indefinitely until the call succeeds or the total process time
-    exceeds 1 hour. Uses the Retry-After header when available, otherwise
-    falls back to exponential backoff capped at 2 minutes.
-    """
-    attempt = 0
-    while True:
-        try:
-            return await coro_fn(*args, **kwargs)
-        except RateLimitError as exc:
-            if _elapsed() >= PROCESS_TIMEOUT:
-                raise SystemExit(
-                    "Error: process has been running for over 1 hour. Aborting."
-                ) from exc
-            delay = exc.retry_after if exc.retry_after else min(BASE_DELAY * (2**attempt), MAX_DELAY)
-            attempt += 1
-            logger.warning(
-                "Rate limited (attempt %d, %.0fs elapsed), retrying in %.1fs",
-                attempt,
-                _elapsed(),
-                delay,
-            )
-            await asyncio.sleep(delay)
 
 
 def get_connector() -> PylonConnector:
@@ -82,7 +40,7 @@ async def _fetch_messages(connector: PylonConnector, issue_id: str) -> str:
         if cursor:
             kwargs["cursor"] = cursor
 
-        result = await _with_retry(connector.messages.list, **kwargs)
+        result = await with_retry(connector.messages.list, **kwargs)
 
         for msg in result.data:
             body = getattr(msg, "message_html", None) or ""
@@ -110,8 +68,7 @@ async def fetch_recent_issues(
     days_back: int = 7,
 ) -> list[PylonIssueBundle]:
     """Fetch recent Pylon issues with their messages, bundled for analysis."""
-    global _process_start
-    _process_start = time.monotonic()
+    reset_timer()
 
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(days=days_back)
@@ -119,7 +76,6 @@ async def fetch_recent_issues(
     start_time = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
     end_time = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # Paginate through all issues in the time window
     issues_raw = []
     cursor = None
 
@@ -129,7 +85,7 @@ async def fetch_recent_issues(
             kwargs["cursor"] = cursor
 
         logger.info("issues.list: %s", kwargs)
-        result = await _with_retry(connector.issues.list, **kwargs)
+        result = await with_retry(connector.issues.list, **kwargs)
         logger.info(
             "issues.list: got %d issue(s), has_next_page=%s",
             len(result.data),
@@ -149,7 +105,6 @@ async def fetch_recent_issues(
         issue_id = issue.id
         message_text = await _fetch_messages(connector, issue_id)
 
-        # Extract tag names
         tags: list[str] = []
         raw_tags = getattr(issue, "tags", None) or []
         for tag in raw_tags:

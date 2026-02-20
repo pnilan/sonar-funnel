@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "airbyte-agent-pylon>=0.1.0",
+    "airbyte-agent-slack>=0.1.0",
     "pydantic-ai-slim[anthropic]>=1.62.0",
     "python-dotenv>=1.2.1",
 ]
@@ -18,4 +19,3 @@ requires = ["uv_build>=0.9.7,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
-airbyte-agent-pylon = { path = "../sonar/integrations/pylon/.generated", editable = true }

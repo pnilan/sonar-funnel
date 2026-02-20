@@ -8,11 +8,14 @@ import sys
 from dotenv import load_dotenv
 
 from sonar_funnel.agent import analyze_issue
+from sonar_funnel.models import IssueAnalysis, PylonIssueBundle
 from sonar_funnel.pylon_source import fetch_recent_issues, get_connector
+from sonar_funnel.slack_report import format_slack_report, get_slack_connector, post_report
 
 
 async def run(days: int) -> None:
     connector = get_connector()
+    slack_connector, slack_channel_id = get_slack_connector()
 
     print(f"Fetching Pylon issues from the last {days} day(s)...", file=sys.stderr)
     bundles = await fetch_recent_issues(connector, days_back=days)
@@ -23,10 +26,14 @@ async def run(days: int) -> None:
 
     print(f"Found {len(bundles)} issue(s). Analyzing...\n", file=sys.stderr)
 
+    results: list[tuple[PylonIssueBundle, IssueAnalysis]] = []
+
     for bundle in bundles:
         print(f"  Analyzing: {bundle.title}...", file=sys.stderr)
         analysis = await analyze_issue(bundle)
+        results.append((bundle, analysis))
 
+    for bundle, analysis in results:
         connector_label = (
             f" [{analysis.affected_connector_or_service}]"
             if analysis.affected_connector_or_service
@@ -41,6 +48,10 @@ async def run(days: int) -> None:
         print(f"  Summary: {analysis.problem_summary}")
         print(f"  Reasoning: {analysis.reasoning}")
         print()
+
+    report_text = format_slack_report(results)
+    await post_report(slack_connector, slack_channel_id, report_text)
+    print("Report posted to Slack.", file=sys.stderr)
 
 
 def main() -> None:
